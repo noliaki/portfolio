@@ -4,11 +4,16 @@
 <script>
 /* global PIXI TweenLite */
 
+import _debounce from 'lodash/debounce'
+
 export default {
   data() {
     return {
       app: undefined,
-      container: undefined
+      container: undefined,
+      images: [],
+      currentImageIndex: 0,
+      isAnimating: false
     }
   },
   computed: {
@@ -32,29 +37,64 @@ export default {
       ]
     }
   },
-  mounted() {
-    this.app = new PIXI.Application({
-      view: this.$refs.canvas,
-      resolution: 1,
-      resizeTo: window
-    })
+  watch: {
+    $route() {
+      if (!this.isAnimating) {
+        console.log('run')
+        this.outImage()
+      }
+    }
+  },
+  methods: {
+    async inImage() {
+      if (!this.images[this.currentImageIndex]) {
+        const texure = await this.loadImageAsTexture(this.currentImageIndex)
+        this.images[this.currentImageIndex] = this.createMesh(texure)
+      }
 
-    this.app.renderer.resize(window.innerWidth, window.innerHeight)
+      this.fitToWindow(this.images[this.currentImageIndex].mesh)
+      this.images[this.currentImageIndex].mesh.alpha = 0
+      this.container.addChild(this.images[this.currentImageIndex].mesh)
 
-    this.container = new PIXI.Container()
+      TweenLite.to(this.images[this.currentImageIndex].mesh, 1, {
+        alpha: 1
+      })
+    },
+    outImage() {
+      const obj = {
+        alpha: 1
+      }
 
-    const filter = new PIXI.filters.BlurFilter()
+      const mesh = this.images[this.currentImageIndex].mesh
+      const rand = this.images[this.currentImageIndex].rand
 
-    filter.strength = 0
+      TweenLite.to(obj, 1, {
+        alpha: 0,
+        onUpdate() {
+          const vertices = mesh.vertices
+          mesh.alpha = obj.alpha
 
-    this.container.filters = [filter]
-    this.app.stage.addChild(this.container)
-
-    const texture = PIXI.Texture.fromImage('/img/CIMG2343.JPG')
-    texture.once('update', () => {
+          for (let i = 0, len = vertices.length; i < len; i++) {
+            mesh.vertices[i] = mesh.vertices[i] + rand[i] * obj.alpha * 10
+          }
+        }
+      })
+    },
+    createMesh(texture) {
       const mesh = new PIXI.mesh.Plane(texture, 10, 10)
       const originalVertices = mesh.vertices.slice()
       const rand = originalVertices.map(vert => Math.random())
+
+      return {
+        mesh,
+        originalVertices,
+        rand
+      }
+    },
+    fitToWindow(mesh) {
+      const texture = mesh._texture
+      mesh.x = 0
+      mesh.y = 0
 
       if (
         window.innerWidth / texture.width >
@@ -71,25 +111,54 @@ export default {
         mesh.x = (window.innerWidth - mesh.width) / 2
         mesh.y = 0
       }
+    },
+    loadImageAsTexture(imageIndex) {
+      return new Promise((resolve, reject) => {
+        const texture = PIXI.Texture.fromImage(this.photos[imageIndex])
 
-      const obj = {
-        x: 0
-      }
+        texture.once('update', texture => {
+          resolve(texture)
+        })
 
-      TweenLite.to(obj, 1, {
-        x: 400,
-        onUpdate() {
-          console.log(obj.x)
-          for (let i = 0, len = mesh.vertices.length; i < len; i++) {
-            if (i % 2 === 0) {
-              mesh.vertices[i] = originalVertices[i] + obj.x * rand[i]
-            }
-          }
-        }
+        texture.once('error', err => {
+          reject(err)
+        })
       })
+    },
+    onResize() {
+      this.$refs.canvas.style.display = 'none'
 
-      this.container.addChild(mesh)
+      this.app.renderer.resize(window.innerWidth, window.innerHeight)
+      if (this.images[this.currentImageIndex]) {
+        this.fitToWindow(this.images[this.currentImageIndex].mesh)
+      }
+      this.$refs.canvas.style.display = ''
+    }
+  },
+  mounted() {
+    window.addEventListener('resize', _debounce(this.onResize, 300))
+
+    this.app = new PIXI.Application({
+      view: this.$refs.canvas,
+      resolution: 1,
+      resizeTo: window
     })
+
+    this.app.renderer.resize(window.innerWidth, window.innerHeight)
+    this.container = new PIXI.Container()
+    this.app.stage.addChild(this.container)
+
+    this.currentImageIndex = Math.floor(Math.random() * this.photos.length)
+
+    this.inImage()
   }
 }
 </script>
+<style lang="stylus" scoped>
+canvas
+  display block
+  position fixed
+  top 0
+  left 0
+  z-index -1
+</style>
