@@ -2,7 +2,7 @@
   canvas(ref="canvas")
 </template>
 <script>
-/* global PIXI TweenLite */
+/* global PIXI TweenLite Power0 Power1 */
 
 import _debounce from 'lodash/debounce'
 
@@ -40,55 +40,118 @@ export default {
   watch: {
     $route() {
       if (!this.isAnimating) {
-        console.log('run')
-        this.outImage()
+        this.outImage(this.currentImageIndex)
       }
     }
   },
+  mounted() {
+    this.app = new PIXI.Application({
+      view: this.$refs.canvas,
+      resolution: 1,
+      resizeTo: window,
+      backgroundColor: 0x47054a
+    })
+
+    this.app.renderer.resize(window.innerWidth, window.innerHeight)
+    this.container = new PIXI.Container()
+    this.app.stage.addChild(this.container)
+    this.currentImageIndex = Math.floor(Math.random() * this.photos.length)
+
+    window.addEventListener('resize', _debounce(this.onResize, 300))
+
+    this.inImage(this.currentImageIndex)
+  },
   methods: {
-    async inImage() {
-      if (!this.images[this.currentImageIndex]) {
-        const texure = await this.loadImageAsTexture(this.currentImageIndex)
-        this.images[this.currentImageIndex] = this.createMesh(texure)
+    async inImage(imageIndex) {
+      if (!this.isAnimating) {
+        this.isAnimating = true
       }
 
-      this.fitToWindow(this.images[this.currentImageIndex].mesh)
-      this.images[this.currentImageIndex].mesh.alpha = 0
-      this.container.addChild(this.images[this.currentImageIndex].mesh)
+      if (!this.images[imageIndex]) {
+        this.images[imageIndex] = await this.loadAndCreate(imageIndex)
+      }
 
-      TweenLite.to(this.images[this.currentImageIndex].mesh, 1, {
-        alpha: 1
+      this.initializeImage(this.images[imageIndex])
+      this.fitToWindow(this.images[imageIndex].mesh)
+
+      this.images[imageIndex].mesh.alpha = 0
+      this.container.addChild(this.images[imageIndex].mesh)
+
+      const self = this
+
+      TweenLite.to(this.images[imageIndex].mesh, 1, {
+        alpha: 1,
+        async onComplete() {
+          const nextImageIndex =
+            (self.currentImageIndex + 1) % self.photos.length
+
+          if (!self.images[nextImageIndex]) {
+            self.images[nextImageIndex] = await self
+              .loadAndCreate(nextImageIndex)
+              .catch(console.log)
+          }
+          self.isAnimating = false
+        },
+        ease: Power0.easeNone
       })
     },
-    outImage() {
+    async loadAndCreate(index) {
+      const texure = await this.loadImageAsTexture(this.photos[index])
+      return this.createMesh(texure)
+    },
+    outImage(imageIndex) {
+      this.isAnimating = true
+      const self = this
+
       const obj = {
-        alpha: 1
+        alpha: 1,
+        scale: 0,
+        translate: 0
       }
 
-      const mesh = this.images[this.currentImageIndex].mesh
-      const rand = this.images[this.currentImageIndex].rand
+      const mesh = this.images[imageIndex].mesh
+      const rand = this.images[imageIndex].rand
+      const origVertices = this.images[imageIndex].originalVertices
+      const displacementFilter = this.images[imageIndex].displacementFilter
 
-      TweenLite.to(obj, 1, {
+      TweenLite.to(obj, 1.3, {
         alpha: 0,
+        scale: 100,
+        translate: window.innerWidth / 3,
         onUpdate() {
-          const vertices = mesh.vertices
           mesh.alpha = obj.alpha
+          displacementFilter.scale.x = obj.scale
 
-          for (let i = 0, len = vertices.length; i < len; i++) {
-            mesh.vertices[i] = mesh.vertices[i] + rand[i] * obj.alpha * 10
+          for (let i = 0, len = mesh.vertices.length; i < len; i++) {
+            mesh.vertices[i] = origVertices[i] + rand[i] * obj.translate
           }
-        }
+        },
+        onComplete() {
+          self.currentImageIndex =
+            (self.currentImageIndex + 1) % self.photos.length
+          self.inImage(self.currentImageIndex)
+        },
+        ease: Power1.easeInOut
       })
     },
     createMesh(texture) {
       const mesh = new PIXI.mesh.Plane(texture, 10, 10)
       const originalVertices = mesh.vertices.slice()
       const rand = originalVertices.map(vert => Math.random())
+      const displacementSprite = PIXI.Sprite.fromImage('/img/water.png')
+      displacementSprite.texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT
+      const displacementFilter = new PIXI.filters.DisplacementFilter(
+        displacementSprite,
+        0
+      )
+
+      mesh.filters = [displacementFilter]
 
       return {
         mesh,
         originalVertices,
-        rand
+        rand,
+        displacementFilter
       }
     },
     fitToWindow(mesh) {
@@ -112,9 +175,16 @@ export default {
         mesh.y = 0
       }
     },
-    loadImageAsTexture(imageIndex) {
+    initializeImage(imageObj) {
+      imageObj.displacementFilter.scale.x = 0
+
+      for (let i = 0, len = imageObj.mesh.vertices.length; i < len; i++) {
+        imageObj.mesh.vertices[i] = imageObj.originalVertices[i]
+      }
+    },
+    loadImageAsTexture(imagePath) {
       return new Promise((resolve, reject) => {
-        const texture = PIXI.Texture.fromImage(this.photos[imageIndex])
+        const texture = PIXI.Texture.fromImage(imagePath)
 
         texture.once('update', texture => {
           resolve(texture)
@@ -134,23 +204,6 @@ export default {
       }
       this.$refs.canvas.style.display = ''
     }
-  },
-  mounted() {
-    window.addEventListener('resize', _debounce(this.onResize, 300))
-
-    this.app = new PIXI.Application({
-      view: this.$refs.canvas,
-      resolution: 1,
-      resizeTo: window
-    })
-
-    this.app.renderer.resize(window.innerWidth, window.innerHeight)
-    this.container = new PIXI.Container()
-    this.app.stage.addChild(this.container)
-
-    this.currentImageIndex = Math.floor(Math.random() * this.photos.length)
-
-    this.inImage()
   }
 }
 </script>
