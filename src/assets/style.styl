@@ -1,0 +1,46 @@
+@import './easing'
+
+*
+  &
+  &::before
+  &::after
+    box-sizing inherit
+  &::before
+  &::after
+    pointer-events none
+
+html
+  font-family serif
+  box-sizing border-box
+  color #2f3233
+
+.inner
+  max-width 700px
+  margin 0 auto
+
+.content
+  padding 70px 1em
+
+a
+  color #000
+
+.page-enter
+  opacity 0
+  transform-origin: 0 0
+  transform: translateY(-10px) skewY(-1.5deg)
+
+.page-enter-to
+.page-leave
+  opacity 1
+  transform-origin: 0 0
+  transform: translateY(0) skewY(0)
+
+.page-enter-active
+.page-leave-active
+  transition opacity 400ms $easeInOutQuad,
+             transform 400ms $easeInOutQuad
+
+.page-leave-to
+  opacity 0
+  transform-origin: 0 0
+  transform: translateY(10px) skewY(1.5deg)

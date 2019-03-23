@@ -6,11 +6,14 @@
         ul
           li
             nuxt-link(:to="{ name: 'about' }") about
+          li
+            nuxt-link(:to="{ name: 'product' }") product
 </template>
 <style lang="stylus" scoped>
 .inner
   display flex
   align-items center
+  transition background-color 200ms linear
 
 nav
   margin-left auto
@@ -24,6 +27,6 @@ ul
 
 a
   text-decoration none
-  padding 1em 0
-  background-color rgba(#fff, 0.5)
+  padding 1em
+  // background-color rgba(#fff, 0.5)
 </style>

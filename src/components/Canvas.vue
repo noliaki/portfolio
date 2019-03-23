@@ -45,11 +45,15 @@ export default {
     }
   },
   mounted() {
+    if (process.env.NODE_ENV === 'production') {
+      PIXI.utils.skipHello()
+    }
+
     this.app = new PIXI.Application({
       view: this.$refs.canvas,
       resolution: 1,
       resizeTo: window,
-      backgroundColor: 0x47054a
+      backgroundColor: 0xffffff
     })
 
     this.app.renderer.resize(window.innerWidth, window.innerHeight)
@@ -114,7 +118,7 @@ export default {
       const origVertices = this.images[imageIndex].originalVertices
       const displacementFilter = this.images[imageIndex].displacementFilter
 
-      TweenLite.to(obj, 1.3, {
+      TweenLite.to(obj, 1, {
         alpha: 0,
         scale: 100,
         translate: window.innerWidth / 3,
@@ -214,4 +218,5 @@ canvas
   top 0
   left 0
   z-index -1
+  opacity 0.4
 </style>

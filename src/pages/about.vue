@@ -1,4 +1,5 @@
 <template lang="pug">
-  article
-    h1 About
+  main
+    article.inner.content
+      h1 about
 </template>

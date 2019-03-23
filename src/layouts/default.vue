@@ -15,14 +15,3 @@ export default {
   }
 }
 </script>
-<style lang="stylus">
-html
-  font-family serif
-
-.inner
-  max-width 700px
-  margin 0 auto
-
-a
-  color #000
-</style>

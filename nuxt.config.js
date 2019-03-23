@@ -36,11 +36,15 @@ export default {
   plugins: [
     {
       src: '~/plugins/pixi',
-      ssr: false
+      mode: 'client'
     },
     {
       src: '~/plugins/gsap',
-      ssr: false
+      mode: 'client'
+    },
+    {
+      src: '~/plugins/contentful',
+      mode: 'server'
     }
   ],
 
@@ -89,6 +93,7 @@ export default {
     base: '/'
   },
   generate: {
-    dir: 'docs'
-  }
+    dir: 'dist'
+  },
+  transition: 'page'
 }

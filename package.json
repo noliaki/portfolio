@@ -15,6 +15,7 @@
   "dependencies": {
     "@noliaki/eslint-config-prettier": "^0.0.2",
     "@nuxtjs/pwa": "^3.0.0-beta.14",
+    "contentful": "^7.5.0",
     "cross-env": "^5.2.0",
     "gsap": "^2.1.2",
     "lodash": "^4.17.11",
