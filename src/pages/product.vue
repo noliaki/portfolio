@@ -15,7 +15,12 @@ import createClient from '~/plugins/contentful'
 export default {
   data() {
     return {
-      startIndex: Math.floor(Math.random() * 5)
+      startIndex: Math.floor(Math.random() * this.noImageLen)
+    }
+  },
+  computed: {
+    noImageLen() {
+      return 8
     }
   },
   async asyncData() {
@@ -28,7 +33,8 @@ export default {
   },
   methods: {
     thumbnailSrc(index) {
-      return `/img/no-image-${((this.startIndex + index) % 8) + 1}.jpg`
+      const n = ((this.startIndex + index) % this.noImageLen) + 1
+      return `/img/no-image-${n}.jpg`
     }
   }
 }
@@ -42,4 +48,18 @@ ul
 
 .item
   background-color rgba(#fff, 0.8)
+
+.item__thumbnail
+  position relative
+  &::before
+    content ''
+    display block
+    padding-top 100%
+
+  > img
+    position absolute
+    top 0
+    left 0
+    width 100%
+    height 100%
 </style>
