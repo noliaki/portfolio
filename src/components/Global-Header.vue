@@ -1,25 +1,38 @@
 <template lang="pug">
   header
-    .inner
+    .name
       nuxt-link(:to="{ name: 'index' }") Noriaki Yamada
-      nav
-        ul
-          li
-            nuxt-link(:to="{ name: 'about' }") about
-          li
-            nuxt-link(:to="{ name: 'product' }") product
+    nav
+      ul
+        li
+          nuxt-link(:to="{ name: 'index' }") home
+        li
+          nuxt-link(:to="{ name: 'about' }") about
+        li
+          nuxt-link(:to="{ name: 'product' }") product
 </template>
 <style lang="stylus" scoped>
-.inner
-  display flex
-  align-items center
-  transition background-color 200ms linear
+header
+  padding 50px 0
+
+.name
+  text-align center
+
+  > a
+    display inline-block
+    border-top 1px solid #000
+    border-bottom 1px solid #000
 
 nav
-  margin-left auto
+  overflow hidden
+  margin-top 10px
+
+  a
+    display block
 
 ul
   display flex
+  justify-content center
   align-items center
   margin 0
   padding 0

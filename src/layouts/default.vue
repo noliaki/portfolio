@@ -1,7 +1,7 @@
 <template lang="pug">
   .wrapper
-    globalHeader
     canvas-component
+    globalHeader
     nuxt(keep-alive)
 </template>
 <script>

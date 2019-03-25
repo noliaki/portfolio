@@ -95,5 +95,9 @@ export default {
   generate: {
     dir: 'dist'
   },
-  transition: 'page'
+  transition: 'page',
+  env: {
+    SPACE_ID: process.env.SPACE_ID || require('./env.json').SPACE_ID,
+    ACCESS_TOKEN: process.env.ACCESS_TOKEN || require('./env.json').ACCESS_TOKEN
+  }
 }
