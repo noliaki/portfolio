@@ -34,7 +34,7 @@ export default {
   computed: {
     ...mapState('posts', ['entries'])
   },
-  async asyncData({ store }) {
+  async fetch({ store }) {
     if (store.state.posts.entries.length > 0) {
       return
     }
@@ -46,7 +46,6 @@ export default {
     store.commit(`posts/${mutationTypes.setEntries}`, items)
   },
   methods: {
-    ...mapMutations('posts', [mutationTypes.setEntries]),
     thumbnailSrc(index) {
       const n = ((this.startIndex + index) % noImagesLen) + 1
       return `/img/no-image-${n}.jpg`
