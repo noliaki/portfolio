@@ -20,21 +20,39 @@ export default {
   computed: {
     photos() {
       return [
-        '/img/CIMG2343.JPG',
-        '/img/DSC00129.JPG',
-        '/img/DSC01353.JPG',
-        '/img/DSC00689.JPG',
-        '/img/CIMG2347.JPG',
-        '/img/IMG_0049.JPG',
-        '/img/IMG_0645.JPG',
-        '/img/DSC01261.JPG',
-        '/img/DSC00144.JPG',
-        '/img/IMG_0331.JPG',
-        '/img/IMG_0668.JPG',
-        '/img/DSC00135.JPG',
-        '/img/DSC00691.JPG',
-        '/img/DSC01401.JPG',
-        '/img/CIMG2428.JPG'
+        'img/background/IMG_1875.JPG',
+        'img/background/DSC01235.JPG',
+        'img/background/CIMG2343.JPG',
+        'img/background/IMG_0348.JPG',
+        'img/background/DSC01353.JPG',
+        'img/background/IMG_0166.JPG',
+        'img/background/DSC00689.JPG',
+        'img/background/CIMG2347.JPG',
+        'img/background/DSC00148.JPG',
+        'img/background/IMG_0315.JPG',
+        'img/background/IMG_0302.JPG',
+        'img/background/IMG_0139.JPG',
+        'img/background/IMG_0890.JPG',
+        'img/background/IMG_0297.JPG',
+        'img/background/IMG_0254.JPG',
+        'img/background/IMG_0268.JPG',
+        'img/background/IMG_0645.JPG',
+        'img/background/DSC00140.JPG',
+        'img/background/IMG_0043.JPG',
+        'img/background/DSC00142.JPG',
+        'img/background/DSC01261.JPG',
+        'img/background/IMG_0290.JPG',
+        'img/background/DSC00152.JPG',
+        'img/background/IMG_0051.JPG',
+        'img/background/DSC00144.JPG',
+        'img/background/IMG_0331.JPG',
+        'img/background/IMG_0668.JPG',
+        'img/background/IMG_0036.JPG',
+        'img/background/DSC00135.JPG',
+        'img/background/DSC00691.JPG',
+        'img/background/DSC01401.JPG',
+        'img/background/CIMG2428.JPG',
+        'img/background/IMG_0187.JPG'
       ]
     }
   },
@@ -101,7 +119,9 @@ export default {
       })
     },
     async loadAndCreate(index) {
-      const texure = await this.loadImageAsTexture(this.photos[index])
+      const texure = await this.loadImageAsTexture(
+        `${this.$router.options.base}${this.photos[index]}`
+      )
       return this.createMesh(texure)
     },
     outImage(imageIndex) {
@@ -143,7 +163,9 @@ export default {
       const mesh = new PIXI.mesh.Plane(texture, 10, 10)
       const originalVertices = mesh.vertices.slice()
       const rand = originalVertices.map(vert => Math.random())
-      const displacementSprite = PIXI.Sprite.fromImage('/img/water.png')
+      const displacementSprite = PIXI.Sprite.fromImage(
+        `${this.$router.options.base}img/background/water.png`
+      )
       displacementSprite.texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT
       const displacementFilter = new PIXI.filters.DisplacementFilter(
         displacementSprite,

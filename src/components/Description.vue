@@ -15,38 +15,34 @@ export default {
           return 'span'
         case 'hyperlink':
           return 'a'
+        default:
+          return 'div'
       }
     },
     createEl(h, content) {
-      return content.map(item => {
-        const tag = this.tagEl(item.nodeType)
-        const option = Object.keys(item.data).reduce((acc, current) => {
-          if (current === 'uri') {
-            acc.href = item.data[current]
-            acc.target = '_blank'
-            acc.rel = 'noopener noreferer'
-          }
+      const option = Object.keys(content.data).reduce((acc, current) => {
+        if (current === 'uri') {
+          acc.href = content.data[current]
+          acc.target = '_blank'
+          acc.rel = 'noopener noreferer'
+        }
 
-          return acc
-        }, {})
+        return acc
+      }, {})
 
-        return h(
-          tag,
-          {
-            attrs: option
-          },
-          item.content ? this.createEl(h, item.content) : item.value
-        )
-      })
+      return h(
+        this.tagEl(content.nodeType),
+        {
+          attrs: option
+        },
+        content.content
+          ? content.content.map(item => this.createEl(h, item))
+          : content.value
+      )
     }
   },
   render(h) {
-    return h(
-      this.tagEl(this.content.nodeType),
-      this.content.content
-        ? this.createEl(h, this.content.content)
-        : this.content.value
-    )
+    return this.createEl(h, this.content)
   }
 }
 </script>

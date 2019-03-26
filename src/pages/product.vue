@@ -3,13 +3,15 @@
     article.content
       ul
         li.item(v-for="(item, index) in items", :key="index")
-          .item__thumbnail
+          header.item__thumbnail
             img(:src="thumbnailSrc(index)", alt="")
-          small {{ item.sys.createdAt }}
-          h2
-              a(:href="item.fields.url", target="_blank", rel="noopener noreferer") {{ item.fields.title }}
-          div
-            discription(v-for="content in item.fields.description.content", :content="content")
+          .item__body
+            small {{ dateFormat(item.sys.createdAt) }}
+            div
+              em
+                a(:href="item.fields.url", target="_blank", rel="noopener noreferer") {{ item.fields.title }}
+            div
+              discription(v-for="content in item.fields.description.content", :content="content")
 
 </template>
 <script>
@@ -39,6 +41,10 @@ export default {
     thumbnailSrc(index) {
       const n = ((this.startIndex + index) % noImagesLen) + 1
       return `/img/no-image-${n}.jpg`
+    },
+    dateFormat(dateString) {
+      const date = new Date(dateString)
+      return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`
     }
   }
 }
@@ -49,12 +55,17 @@ ul
   grid-template-columns repeat(auto-fill, minmax(200px, 1fr))
   grid-gap 20px
   list-style none
+  margin 0
+  padding 0
 
 .item
+  display flex
+  flex-direction column
   background-color rgba(#fff, 0.8)
 
 .item__thumbnail
   position relative
+  flex-shrink 0
   &::before
     content ''
     display block
@@ -66,4 +77,8 @@ ul
     left 0
     width 100%
     height 100%
+
+.item__body
+  flex-grow 1
+  padding 15px
 </style>
