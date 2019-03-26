@@ -40,7 +40,9 @@ export default {
     }
 
     console.log('run async data')
-    const client = createClient()
+    const client = createClient({
+      content_type: 'product'
+    })
     const { items } = await client.getEntries()
 
     store.commit(`posts/${mutationTypes.setEntries}`, items)
