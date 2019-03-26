@@ -3,24 +3,28 @@
     article.content
       ul
         li.item(v-for="(item, index) in items", :key="index")
-          a(:href="item.fields.url", target="_blank", rel="noopener noreferer")
-            .item__thumbnail
-              img(:src="thumbnailSrc(index)", alt="")
-            small {{ item.sys.createdAt }}
-            h2 {{ item.fields.title }}
+          .item__thumbnail
+            img(:src="thumbnailSrc(index)", alt="")
+          small {{ item.sys.createdAt }}
+          h2
+              a(:href="item.fields.url", target="_blank", rel="noopener noreferer") {{ item.fields.title }}
+          div
+            discription(v-for="content in item.fields.description.content", :content="content")
+
 </template>
 <script>
 import createClient from '~/plugins/contentful'
+import discription from '~/components/Description'
+
+const noImagesLen = 8
 
 export default {
+  components: {
+    discription
+  },
   data() {
     return {
-      startIndex: Math.floor(Math.random() * this.noImageLen)
-    }
-  },
-  computed: {
-    noImageLen() {
-      return 8
+      startIndex: Math.floor(Math.random() * noImagesLen)
     }
   },
   async asyncData() {
@@ -33,7 +37,7 @@ export default {
   },
   methods: {
     thumbnailSrc(index) {
-      const n = ((this.startIndex + index) % this.noImageLen) + 1
+      const n = ((this.startIndex + index) % noImagesLen) + 1
       return `/img/no-image-${n}.jpg`
     }
   }
@@ -42,7 +46,7 @@ export default {
 <style lang="stylus" scoped>
 ul
   display grid
-  grid-template-columns repeat(auto-fill, minmax(250px, 1fr))
+  grid-template-columns repeat(auto-fill, minmax(200px, 1fr))
   grid-gap 20px
   list-style none
 
