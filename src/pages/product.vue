@@ -17,7 +17,7 @@
 <script>
 import createClient from '~/plugins/contentful'
 import discription from '~/components/Description'
-import { mapState, mapMutations } from 'vuex'
+import { mapState } from 'vuex'
 import { mutationTypes } from '~/store/posts'
 
 const noImagesLen = 8
@@ -89,4 +89,5 @@ ul
 .item__body
   flex-grow 1
   padding 15px
+  white-space pre-wrap
 </style>

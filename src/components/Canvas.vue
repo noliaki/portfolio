@@ -64,13 +64,17 @@ export default {
   },
   watch: {
     $route() {
-      if (!this.isAnimating) {
+      if (!this.isAnimating && !this.isLoadingNextImage) {
         this.outImage(this.currentImageIndex)
       }
     }
   },
   created() {
     if (process.server) return
+
+    if (process.env.NODE_ENV === 'production') {
+      PIXI.utils.skipHello()
+    }
 
     this.displacementSprite = PIXI.Sprite.fromImage(
       `${this.$router.options.base}img/background/water.png`
@@ -79,10 +83,6 @@ export default {
       PIXI.WRAP_MODES.REPEAT
   },
   mounted() {
-    if (process.env.NODE_ENV === 'production') {
-      PIXI.utils.skipHello()
-    }
-
     this.app = new PIXI.Application({
       view: this.$refs.canvas,
       resolution: 1,
@@ -90,7 +90,7 @@ export default {
       backgroundColor: 0xffffff
     })
 
-    this.app.renderer.resize(window.innerWidth, window.innerHeight)
+    this.onResize()
     this.container = new PIXI.Container()
     this.app.stage.addChild(this.container)
     this.currentImageIndex = Math.floor(Math.random() * this.photos.length)
@@ -115,37 +115,30 @@ export default {
       this.images[imageIndex].mesh.alpha = 0
       this.container.addChild(this.images[imageIndex].mesh)
 
-      const self = this
-
-      TweenLite.to(this.images[imageIndex].mesh, 1, {
+      TweenLite.to(this.images[imageIndex].mesh, 0.5, {
         alpha: 1,
-        async onComplete() {
-          const nextImageIndex =
-            (self.currentImageIndex + 1) % self.photos.length
-
-          if (!self.images[nextImageIndex]) {
-            self.images[nextImageIndex] = await self
-              .loadAndCreate(nextImageIndex)
-              .catch(console.log)
-          }
-          self.isAnimating = false
+        onComplete: () => {
+          this.isAnimating = false
         },
         ease: Power0.easeNone
       })
+
+      const nextImageIndex = (this.currentImageIndex + 1) % this.photos.length
+      if (!this.images[nextImageIndex]) {
+        this.isLoadingNextImage = true
+        this.images[nextImageIndex] = await this.loadAndCreate(nextImageIndex)
+        this.isLoadingNextImage = false
+      }
     },
     async loadAndCreate(index) {
-      this.isLoadingNextImage = true
       const texure = await this.loadImageAsTexture(
         `${this.$router.options.base}${this.photos[index]}`
       )
-      const obj = this.createMesh(texure)
 
-      this.isLoadingNextImage = false
-      return obj
+      return this.createMesh(texure)
     },
     outImage(imageIndex) {
       this.isAnimating = true
-      const self = this
 
       const obj = {
         alpha: 1,
@@ -162,7 +155,7 @@ export default {
         alpha: 0,
         scale: 100,
         translate: window.innerWidth / 3,
-        onUpdate() {
+        onUpdate: () => {
           mesh.alpha = obj.alpha
           displacementFilter.scale.x = obj.scale
 
@@ -170,10 +163,10 @@ export default {
             mesh.vertices[i] = origVertices[i] + rand[i] * obj.translate
           }
         },
-        onComplete() {
-          self.currentImageIndex =
-            (self.currentImageIndex + 1) % self.photos.length
-          self.inImage(self.currentImageIndex)
+        onComplete: () => {
+          this.currentImageIndex =
+            (this.currentImageIndex + 1) % this.photos.length
+          this.inImage(this.currentImageIndex)
         },
         ease: Power1.easeInOut
       })
@@ -239,11 +232,12 @@ export default {
     },
     onResize() {
       this.$refs.canvas.style.display = 'none'
-
       this.app.renderer.resize(window.innerWidth, window.innerHeight)
+
       if (this.images[this.currentImageIndex]) {
         this.fitToWindow(this.images[this.currentImageIndex].mesh)
       }
+
       this.$refs.canvas.style.display = ''
     }
   }
