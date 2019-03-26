@@ -14,7 +14,8 @@ export default {
       container: undefined,
       images: [],
       currentImageIndex: 0,
-      isAnimating: false
+      isAnimating: false,
+      displacementSprite: undefined
     }
   },
   computed: {
@@ -62,6 +63,15 @@ export default {
         this.outImage(this.currentImageIndex)
       }
     }
+  },
+  created() {
+    if (process.server) return
+
+    this.displacementSprite = PIXI.Sprite.fromImage(
+      `${this.$router.options.base}img/background/water.png`
+    )
+    this.displacementSprite.texture.baseTexture.wrapMode =
+      PIXI.WRAP_MODES.REPEAT
   },
   mounted() {
     if (process.env.NODE_ENV === 'production') {
@@ -163,12 +173,8 @@ export default {
       const mesh = new PIXI.mesh.Plane(texture, 10, 10)
       const originalVertices = mesh.vertices.slice()
       const rand = originalVertices.map(vert => Math.random())
-      const displacementSprite = PIXI.Sprite.fromImage(
-        `${this.$router.options.base}img/background/water.png`
-      )
-      displacementSprite.texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT
       const displacementFilter = new PIXI.filters.DisplacementFilter(
-        displacementSprite,
+        this.displacementSprite,
         0
       )
 
