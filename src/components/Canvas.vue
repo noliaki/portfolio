@@ -1,6 +1,10 @@
 <template lang="pug">
   div
     canvas(ref="canvas")
+    .cover
+    .loading-next-image(v-show="isLoadingNextImage")
+      span.loading-circle
+      | loading next background image...
 </template>
 <script>
 /* global PIXI TweenLite Power0 Power1 */
@@ -15,7 +19,8 @@ export default {
       images: [],
       currentImageIndex: 0,
       isAnimating: false,
-      displacementSprite: undefined
+      displacementSprite: undefined,
+      isLoadingNextImage: false
     }
   },
   computed: {
@@ -129,10 +134,14 @@ export default {
       })
     },
     async loadAndCreate(index) {
+      this.isLoadingNextImage = true
       const texure = await this.loadImageAsTexture(
         `${this.$router.options.base}${this.photos[index]}`
       )
-      return this.createMesh(texure)
+      const obj = this.createMesh(texure)
+
+      this.isLoadingNextImage = false
+      return obj
     },
     outImage(imageIndex) {
       this.isAnimating = true
@@ -241,18 +250,15 @@ export default {
 }
 </script>
 <style lang="stylus" scoped>
-div
-  &::after
-    content ''
-    display block
-    position fixed
-    top 0
-    right 0
-    bottom 0
-    left 0
-    background-color #fff
-    opacity 0.4
-    z-index -1
+.cover
+  position fixed
+  top 0
+  right 0
+  bottom 0
+  left 0
+  background-color #fff
+  opacity 0.4
+  z-index -1
 
 canvas
   display block
@@ -260,4 +266,29 @@ canvas
   top 0
   left 0
   z-index -1
+
+.loading-next-image
+  position fixed
+  top 10px
+  right 10px
+  font-size 0.8rem
+  z-index 1
+
+.loading-circle
+  display inline-block
+  width 1em
+  height 1em
+  border-radius 2em
+  border-top 2px solid lighten(#000, 70%)
+  border-right 2px solid #000
+  border-bottom 2px solid #000
+  border-left 2px solid #000
+  vertical-align middle
+  margin-right 0.5em
+
+  animation loading 700ms linear 0s infinite normal forwards
+
+@keyframes loading
+  to
+    transform rotate(360deg)
 </style>

@@ -2,7 +2,7 @@
   main
     article.content
       ul
-        li.item(v-for="(item, index) in items", :key="index")
+        li.item(v-for="(item, index) in entries", :key="index")
           header.item__thumbnail
             img(:src="thumbnailSrc(index)", alt="")
           .item__body
@@ -17,6 +17,8 @@
 <script>
 import createClient from '~/plugins/contentful'
 import discription from '~/components/Description'
+import { mapState, mapMutations } from 'vuex'
+import { mutationTypes } from '~/store/posts'
 
 const noImagesLen = 8
 
@@ -29,15 +31,22 @@ export default {
       startIndex: Math.floor(Math.random() * noImagesLen)
     }
   },
-  async asyncData() {
+  computed: {
+    ...mapState('posts', ['entries'])
+  },
+  async asyncData({ store }) {
+    if (store.state.posts.entries.length > 0) {
+      return
+    }
+
+    console.log('run async data')
     const client = createClient()
     const { items } = await client.getEntries()
 
-    return {
-      items
-    }
+    store.commit(`posts/${mutationTypes.setEntries}`, items)
   },
   methods: {
+    ...mapMutations('posts', [mutationTypes.setEntries]),
     thumbnailSrc(index) {
       const n = ((this.startIndex + index) % noImagesLen) + 1
       return `/img/no-image-${n}.jpg`
