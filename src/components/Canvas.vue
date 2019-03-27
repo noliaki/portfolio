@@ -1,6 +1,6 @@
 <template lang="pug">
-  div
-    canvas(ref="canvas")
+  div(:class="`-${$route.name}`")
+    canvas.background-canvas(ref="canvas")
     .cover
     .loading-next-image(v-show="isLoadingNextImage")
       span.loading-circle
@@ -106,7 +106,9 @@ export default {
       }
 
       if (!this.images[imageIndex]) {
+        this.isLoadingNextImage = true
         this.images[imageIndex] = await this.loadAndCreate(imageIndex)
+        this.isLoadingNextImage = false
       }
 
       this.initializeImage(this.images[imageIndex])
@@ -243,46 +245,3 @@ export default {
   }
 }
 </script>
-<style lang="stylus" scoped>
-.cover
-  position fixed
-  top 0
-  right 0
-  bottom 0
-  left 0
-  background-color #fff
-  opacity 0.4
-  z-index -1
-
-canvas
-  display block
-  position fixed
-  top 0
-  left 0
-  z-index -1
-
-.loading-next-image
-  position fixed
-  top 10px
-  right 10px
-  font-size 0.8rem
-  z-index 1
-
-.loading-circle
-  display inline-block
-  width 1em
-  height 1em
-  border-radius 2em
-  border-top 2px solid lighten(#000, 70%)
-  border-right 2px solid #000
-  border-bottom 2px solid #000
-  border-left 2px solid #000
-  vertical-align middle
-  margin-right 0.5em
-
-  animation loading 700ms linear 0s infinite normal forwards
-
-@keyframes loading
-  to
-    transform rotate(360deg)
-</style>

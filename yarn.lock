@@ -926,6 +926,11 @@
   dependencies:
     core-js "^2.5.7"
 
+"@noliaki/css-cubic-bezier-variable@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@noliaki/css-cubic-bezier-variable/-/css-cubic-bezier-variable-1.1.0.tgz#d091a3de908f9d038c57236705c6e9a3afd3e9bb"
+  integrity sha512-Yq1rp8sAh0nvGdf8PFbAAaGMQsailoC6IPKBiu2tnkIdjSPoXSTeKYOSq/TKcw+h4xpR4bKe66SowqzL8lnQBg==
+
 "@noliaki/eslint-config-prettier@^0.0.2":
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/@noliaki/eslint-config-prettier/-/eslint-config-prettier-0.0.2.tgz#bfb1f187152389ef128cdf2eed4b786e32133ab7"

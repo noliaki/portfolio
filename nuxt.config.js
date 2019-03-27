@@ -1,7 +1,14 @@
+import * as fs from 'fs'
 import TerserPlugin from 'terser-webpack-plugin'
+import * as contentful from 'contentful'
 import pkg from './package'
 
-export default {
+const client = contentful.createClient({
+  space: process.env.SPACE_ID || require('./env.json').SPACE_ID,
+  accessToken: process.env.ACCESS_TOKEN || require('./env.json').ACCESS_TOKEN
+})
+
+const config = {
   mode: 'universal',
 
   /*
@@ -41,10 +48,6 @@ export default {
     {
       src: '~/plugins/gsap',
       mode: 'client'
-    },
-    {
-      src: '~/plugins/contentful',
-      mode: 'server'
     }
   ],
 
@@ -95,9 +98,19 @@ export default {
   generate: {
     dir: 'dist'
   },
-  transition: 'page',
-  env: {
-    SPACE_ID: process.env.SPACE_ID || require('./env.json').SPACE_ID,
-    ACCESS_TOKEN: process.env.ACCESS_TOKEN || require('./env.json').ACCESS_TOKEN
-  }
+  transition: 'page'
 }
+
+;(async () => {
+  const { items } = await client.getEntries({
+    content_type: 'product',
+    order: '-sys.createdAt'
+  })
+
+  fs.writeFileSync(
+    `${config.srcDir}static/product-entries.json`,
+    JSON.stringify(items)
+  )
+})()
+
+export default config
