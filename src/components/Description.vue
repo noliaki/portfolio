@@ -3,7 +3,8 @@ export default {
   props: {
     content: {
       type: Object,
-      require: true
+      require: true,
+      default: () => ({})
     }
   },
   methods: {

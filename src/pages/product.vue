@@ -4,14 +4,22 @@
       ul.product__list
         li.product__item(v-for="(item, index) in entries", :key="index")
           .product__thumbnail
-            img(:src="thumbnailSrc(index)", alt="")
+            img(:src="thumbnailSrc(index)", :alt="item.fields.title")
           .product__body
             small {{ dateFormat(item.sys.createdAt) }}
             .product__name
               em
-                a(:href="item.fields.url", target="_blank", rel="noopener noreferer") {{ item.fields.title }}
+                a(
+                  :href="item.fields.url",
+                  target="_blank",
+                  rel="noopener noreferer"
+                ) {{ item.fields.title }}
             .product__description
-              discription(v-for="content in item.fields.description.content.slice(0, 1)", :content="content")
+              discription(
+                v-for="(content, index) in item.fields.description.content.slice(0, 1)",
+                :content="content",
+                :key="index"
+              )
 
 </template>
 <script>
@@ -21,6 +29,9 @@ import { mapGetters } from 'vuex'
 const noImagesLen = 8
 
 export default {
+  head: {
+    title: 'product'
+  },
   components: {
     discription
   },

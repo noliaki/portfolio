@@ -3,7 +3,9 @@
     article.inner.content.about
       div
         img(src="/img/noriaki-yamada.jpg", alt="Noriaki Yamada")
-      p 山田 典明 | Noriaki Yamada
+      p Noriaki Yamada
+      p 山田 典明
+      p 男
       p 札幌生まれ
       p @noliaki
       .sns
@@ -14,3 +16,10 @@
           a(href="https://github.com/noliaki", target="_blank", rel="noopener noreferer")
             img(src="/img/logo-github.svg", alt="GitHub")
 </template>
+<script>
+export default {
+  head: {
+    title: 'about'
+  }
+}
+</script>
