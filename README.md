@@ -1,3 +1,5 @@
+[![Netlify Status](https://api.netlify.com/api/v1/badges/73b70a3d-636d-499b-973d-6ab0e0808b7a/deploy-status)](https://app.netlify.com/sites/noliaki/deploys)
+
 # portfolio
 
 > My mathematical Nuxt.js project
