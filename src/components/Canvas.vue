@@ -28,6 +28,7 @@ export default {
       return [
         'img/background/IMG_1875.JPG',
         'img/background/DSC01235.JPG',
+        'img/background/IMG_0001.JPG',
         'img/background/CIMG2343.JPG',
         'img/background/IMG_0348.JPG',
         'img/background/DSC01353.JPG',
@@ -46,19 +47,24 @@ export default {
         'img/background/DSC00140.JPG',
         'img/background/IMG_0043.JPG',
         'img/background/DSC00142.JPG',
+        'img/background/IMG_0518.JPG',
         'img/background/DSC01261.JPG',
+        'img/background/IMG_0454.JPG',
         'img/background/IMG_0290.JPG',
         'img/background/DSC00152.JPG',
         'img/background/IMG_0051.JPG',
         'img/background/DSC00144.JPG',
+        'img/background/IMG_0251.JPG',
         'img/background/IMG_0331.JPG',
         'img/background/IMG_0668.JPG',
         'img/background/IMG_0036.JPG',
         'img/background/DSC00135.JPG',
+        'img/background/IMG_0619.JPG',
         'img/background/DSC00691.JPG',
         'img/background/DSC01401.JPG',
         'img/background/CIMG2428.JPG',
-        'img/background/IMG_0187.JPG'
+        'img/background/IMG_0187.JPG',
+        'img/background/DSC_0022.jpg'
       ]
     }
   },

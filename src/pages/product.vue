@@ -26,7 +26,7 @@
 import discription from '~/components/Description'
 import { mapGetters } from 'vuex'
 
-const noImagesLen = 8
+const noImagesLen = 13
 
 export default {
   head: {
