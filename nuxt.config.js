@@ -8,7 +8,7 @@ const client = contentful.createClient({
   accessToken: process.env.ACCESS_TOKEN || require('./env.json').ACCESS_TOKEN
 })
 
-const config = {
+export default {
   mode: 'universal',
 
   /*
@@ -99,37 +99,40 @@ const config = {
   generate: {
     dir: 'dist'
   },
-  transition: 'page'
+  transition: 'page',
+  hooks: {
+    async ready(nuxt) {
+      const productItems = await client.getEntries({
+        content_type: 'product',
+        order: '-sys.createdAt'
+      })
+
+      const bgImages = await client.getEntries({
+        content_type: 'backgroundImage'
+      })
+
+      const noImages = await client.getEntries({
+        content_type: 'noImage'
+      })
+
+      return new Promise((resolve, reject) => {
+        fs.writeFileSync(
+          `${nuxt.options.srcDir}/static/product-entries.json`,
+          JSON.stringify(productItems.items)
+        )
+
+        fs.writeFileSync(
+          `${nuxt.options.srcDir}/static/background-entries.json`,
+          JSON.stringify(bgImages.items)
+        )
+
+        fs.writeFileSync(
+          `${nuxt.options.srcDir}/static/noImage-entries.json`,
+          JSON.stringify(noImages.items)
+        )
+
+        resolve()
+      })
+    }
+  }
 }
-
-;(async () => {
-  const productItems = await client.getEntries({
-    content_type: 'product',
-    order: '-sys.createdAt'
-  })
-
-  const bgImages = await client.getEntries({
-    content_type: 'backgroundImage'
-  })
-
-  const noImages = await client.getEntries({
-    content_type: 'noImage'
-  })
-
-  fs.writeFileSync(
-    `${config.srcDir}static/product-entries.json`,
-    JSON.stringify(productItems.items)
-  )
-
-  fs.writeFileSync(
-    `${config.srcDir}static/background-entries.json`,
-    JSON.stringify(bgImages.items)
-  )
-
-  fs.writeFileSync(
-    `${config.srcDir}static/noImage-entries.json`,
-    JSON.stringify(noImages.items)
-  )
-})()
-
-export default config
