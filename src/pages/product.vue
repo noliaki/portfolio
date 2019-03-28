@@ -2,7 +2,7 @@
   main
     article.content
       ul.product__list
-        li.product__item(v-for="(item, index) in entries", :key="index")
+        li.product__item(v-for="(item, index) in products", :key="index")
           .product__thumbnail
             img(:src="thumbnailSrc(index)", :alt="item.fields.title")
           .product__body
@@ -26,8 +26,6 @@
 import discription from '~/components/Description'
 import { mapGetters } from 'vuex'
 
-const noImagesLen = 13
-
 export default {
   head: {
     title: 'product'
@@ -37,16 +35,24 @@ export default {
   },
   data() {
     return {
-      startIndex: Math.floor(Math.random() * noImagesLen)
+      random: Math.random()
     }
   },
   computed: {
-    ...mapGetters('product', ['entries'])
+    ...mapGetters('product', {
+      products: 'entries'
+    }),
+    ...mapGetters('no-image', {
+      noImages: 'entries'
+    }),
+    startIndex() {
+      return Math.floor(this.random * this.noImages.length)
+    }
   },
   methods: {
     thumbnailSrc(index) {
-      const n = ((this.startIndex + index) % noImagesLen) + 1
-      return `/img/no-image-${n}.jpg`
+      const n = (this.startIndex + index) % this.noImages.length
+      return this.noImages[n].fields.image.fields.file.url
     },
     dateFormat(dateString) {
       const date = new Date(dateString)

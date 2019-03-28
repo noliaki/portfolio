@@ -103,14 +103,32 @@ const config = {
 }
 
 ;(async () => {
-  const { items } = await client.getEntries({
+  const productItems = await client.getEntries({
     content_type: 'product',
     order: '-sys.createdAt'
   })
 
+  const bgImages = await client.getEntries({
+    content_type: 'backgroundImage'
+  })
+
+  const noImages = await client.getEntries({
+    content_type: 'noImage'
+  })
+
   fs.writeFileSync(
     `${config.srcDir}static/product-entries.json`,
-    JSON.stringify(items)
+    JSON.stringify(productItems.items)
+  )
+
+  fs.writeFileSync(
+    `${config.srcDir}static/background-entries.json`,
+    JSON.stringify(bgImages.items)
+  )
+
+  fs.writeFileSync(
+    `${config.srcDir}static/noImage-entries.json`,
+    JSON.stringify(noImages.items)
   )
 })()
 

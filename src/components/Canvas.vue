@@ -10,6 +10,7 @@
 /* global PIXI TweenLite Power0 Power1 */
 
 import _debounce from 'lodash/debounce'
+import { mapGetters } from 'vuex'
 
 export default {
   data() {
@@ -24,49 +25,7 @@ export default {
     }
   },
   computed: {
-    photos() {
-      return [
-        'img/background/IMG_1875.JPG',
-        'img/background/DSC01235.JPG',
-        'img/background/IMG_0001.JPG',
-        'img/background/CIMG2343.JPG',
-        'img/background/IMG_0348.JPG',
-        'img/background/DSC01353.JPG',
-        'img/background/IMG_0166.JPG',
-        'img/background/DSC00689.JPG',
-        'img/background/CIMG2347.JPG',
-        'img/background/DSC00148.JPG',
-        'img/background/IMG_0315.JPG',
-        'img/background/IMG_0302.JPG',
-        'img/background/IMG_0139.JPG',
-        'img/background/IMG_0890.JPG',
-        'img/background/IMG_0297.JPG',
-        'img/background/IMG_0254.JPG',
-        'img/background/IMG_0268.JPG',
-        'img/background/IMG_0645.JPG',
-        'img/background/DSC00140.JPG',
-        'img/background/IMG_0043.JPG',
-        'img/background/DSC00142.JPG',
-        'img/background/IMG_0518.JPG',
-        'img/background/DSC01261.JPG',
-        'img/background/IMG_0454.JPG',
-        'img/background/IMG_0290.JPG',
-        'img/background/DSC00152.JPG',
-        'img/background/IMG_0051.JPG',
-        'img/background/DSC00144.JPG',
-        'img/background/IMG_0251.JPG',
-        'img/background/IMG_0331.JPG',
-        'img/background/IMG_0668.JPG',
-        'img/background/IMG_0036.JPG',
-        'img/background/DSC00135.JPG',
-        'img/background/IMG_0619.JPG',
-        'img/background/DSC00691.JPG',
-        'img/background/DSC01401.JPG',
-        'img/background/CIMG2428.JPG',
-        'img/background/IMG_0187.JPG',
-        'img/background/DSC_0022.jpg'
-      ]
-    }
+    ...mapGetters('background', ['entries'])
   },
   watch: {
     $route() {
@@ -83,7 +42,7 @@ export default {
     }
 
     this.displacementSprite = PIXI.Sprite.fromImage(
-      `${this.$router.options.base}img/background/water.png`
+      `${this.$router.options.base}img/water.png`
     )
     this.displacementSprite.texture.baseTexture.wrapMode =
       PIXI.WRAP_MODES.REPEAT
@@ -99,7 +58,7 @@ export default {
     this.onResize()
     this.container = new PIXI.Container()
     this.app.stage.addChild(this.container)
-    this.currentImageIndex = Math.floor(Math.random() * this.photos.length)
+    this.currentImageIndex = Math.floor(Math.random() * this.entries.length)
 
     window.addEventListener('resize', _debounce(this.onResize, 300))
 
@@ -131,7 +90,7 @@ export default {
         ease: Power0.easeNone
       })
 
-      const nextImageIndex = (this.currentImageIndex + 1) % this.photos.length
+      const nextImageIndex = (this.currentImageIndex + 1) % this.entries.length
       if (!this.images[nextImageIndex]) {
         this.isLoadingNextImage = true
         this.images[nextImageIndex] = await this.loadAndCreate(nextImageIndex)
@@ -140,7 +99,7 @@ export default {
     },
     async loadAndCreate(index) {
       const texure = await this.loadImageAsTexture(
-        `${this.$router.options.base}${this.photos[index]}`
+        this.entries[index].fields.image.fields.file.url
       )
 
       return this.createMesh(texure)
@@ -173,7 +132,7 @@ export default {
         },
         onComplete: () => {
           this.currentImageIndex =
-            (this.currentImageIndex + 1) % this.photos.length
+            (this.currentImageIndex + 1) % this.entries.length
           this.inImage(this.currentImageIndex)
         },
         ease: Power1.easeInOut
