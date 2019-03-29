@@ -15,7 +15,7 @@
                   rel="noopener noreferer"
                 ) {{ item.fields.title }}
             .product__description
-              discription(
+              content-to-element(
                 v-for="(content, index) in item.fields.description.content.slice(0, 1)",
                 :content="content",
                 :key="index"
@@ -23,7 +23,7 @@
 
 </template>
 <script>
-import discription from '~/components/Description'
+import contentToElement from '~/components/ContentToElement'
 import { mapGetters } from 'vuex'
 
 export default {
@@ -31,7 +31,7 @@ export default {
     title: 'product'
   },
   components: {
-    discription
+    contentToElement
   },
   data() {
     return {

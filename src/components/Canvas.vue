@@ -21,7 +21,8 @@ export default {
       currentImageIndex: 0,
       isAnimating: false,
       displacementSprite: undefined,
-      isLoadingNextImage: false
+      isLoadingNextImage: false,
+      distance: undefined
     }
   },
   computed: {
@@ -42,10 +43,10 @@ export default {
     }
 
     this.displacementSprite = PIXI.Sprite.fromImage(
-      `${this.$router.options.base}img/water.png`
+      `${this.$router.options.base}img/cloud.png`
     )
     this.displacementSprite.texture.baseTexture.wrapMode =
-      PIXI.WRAP_MODES.REPEAT
+      PIXI.WRAP_MODES.MIRRORED_REPEAT
   },
   mounted() {
     this.app = new PIXI.Application({
@@ -109,25 +110,28 @@ export default {
 
       const obj = {
         alpha: 1,
-        scale: 0,
+        scaleX: 0,
+        scaleY: 0,
         translate: 0
       }
 
       const mesh = this.images[imageIndex].mesh
-      const rand = this.images[imageIndex].rand
       const origVertices = this.images[imageIndex].originalVertices
       const displacementFilter = this.images[imageIndex].displacementFilter
+      const ratio = origVertices.map(item => Math.random())
 
       TweenLite.to(obj, 1, {
         alpha: 0,
-        scale: 100,
-        translate: window.innerWidth / 3,
+        scaleX: Math.random() * -1000 + 500,
+        scaleY: Math.random() * -1000 + 500,
+        translate: this.distance,
         onUpdate: () => {
           mesh.alpha = obj.alpha
-          displacementFilter.scale.x = obj.scale
+          displacementFilter.scale.x = obj.scaleX
+          displacementFilter.scale.y = obj.scaleY
 
           for (let i = 0, len = mesh.vertices.length; i < len; i++) {
-            mesh.vertices[i] = origVertices[i] + rand[i] * obj.translate
+            mesh.vertices[i] = origVertices[i] + ratio[i] * obj.translate
           }
         },
         onComplete: () => {
@@ -141,7 +145,6 @@ export default {
     createMesh(texture) {
       const mesh = new PIXI.mesh.Plane(texture, 10, 10)
       const originalVertices = mesh.vertices.slice()
-      const rand = originalVertices.map(vert => Math.random())
       const displacementFilter = new PIXI.filters.DisplacementFilter(
         this.displacementSprite,
         0
@@ -152,7 +155,6 @@ export default {
       return {
         mesh,
         originalVertices,
-        rand,
         displacementFilter
       }
     },
@@ -179,6 +181,7 @@ export default {
     },
     initializeImage(imageObj) {
       imageObj.displacementFilter.scale.x = 0
+      imageObj.displacementFilter.scale.y = 0
 
       for (let i = 0, len = imageObj.mesh.vertices.length; i < len; i++) {
         imageObj.mesh.vertices[i] = imageObj.originalVertices[i]
@@ -205,6 +208,7 @@ export default {
         this.fitToWindow(this.images[this.currentImageIndex].mesh)
       }
 
+      this.distance = Math.max(window.innerWidth, window.innerHeight) / 2
       this.$refs.canvas.style.display = ''
     }
   }

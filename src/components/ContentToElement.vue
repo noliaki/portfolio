@@ -16,6 +16,8 @@ export default {
           return 'span'
         case 'hyperlink':
           return 'a'
+        case 'embedded-asset-block':
+          return 'img'
         default:
           return 'div'
       }
@@ -26,6 +28,11 @@ export default {
           acc.href = content.data[current]
           acc.target = '_blank'
           acc.rel = 'noopener noreferer'
+        }
+
+        if (current === 'target') {
+          acc.src = content.data.target.fields.file.url
+          acc.alt = content.data.target.fields.title
         }
 
         return acc

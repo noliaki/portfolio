@@ -115,6 +115,10 @@ export default {
         content_type: 'noImage'
       })
 
+      const about = await client.getEntries({
+        content_type: 'about'
+      })
+
       return new Promise((resolve, reject) => {
         fs.writeFileSync(
           `${nuxt.options.srcDir}/static/product-entries.json`,
@@ -129,6 +133,11 @@ export default {
         fs.writeFileSync(
           `${nuxt.options.srcDir}/static/noImage-entries.json`,
           JSON.stringify(noImages.items)
+        )
+
+        fs.writeFileSync(
+          `${nuxt.options.srcDir}/static/about.json`,
+          JSON.stringify(about.items[0])
         )
 
         resolve()
