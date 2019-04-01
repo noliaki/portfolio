@@ -45,6 +45,9 @@ export default {
     this.displacementSprite = PIXI.Sprite.fromImage(
       `${this.$router.options.base}img/cloud.png`
     )
+
+    this.displacementSprite.alpha = 0
+
     this.displacementSprite.texture.baseTexture.wrapMode =
       PIXI.WRAP_MODES.MIRRORED_REPEAT
   },
@@ -62,6 +65,8 @@ export default {
     this.currentImageIndex = Math.floor(Math.random() * this.entries.length)
 
     window.addEventListener('resize', _debounce(this.onResize, 300))
+
+    this.app.stage.addChild(this.displacementSprite)
 
     this.inImage(this.currentImageIndex)
   },
@@ -115,15 +120,15 @@ export default {
         translate: 0
       }
 
+      const displacementFilter = this.images[imageIndex].displacementFilter
       const mesh = this.images[imageIndex].mesh
       const origVertices = this.images[imageIndex].originalVertices
-      const displacementFilter = this.images[imageIndex].displacementFilter
       const ratio = origVertices.map(item => Math.random())
 
       TweenLite.to(obj, 1, {
         alpha: 0,
-        scaleX: Math.random() * -1000 + 500,
-        scaleY: Math.random() * -1000 + 500,
+        scaleX: Math.random() * 1000 + 1000,
+        scaleY: Math.random() * 1000 + 1000,
         translate: this.distance,
         onUpdate: () => {
           mesh.alpha = obj.alpha
@@ -208,7 +213,10 @@ export default {
         this.fitToWindow(this.images[this.currentImageIndex].mesh)
       }
 
-      this.distance = Math.max(window.innerWidth, window.innerHeight) / 2
+      this.displacementSprite.width = window.innerWidth
+      this.displacementSprite.height = window.innerHeight
+
+      this.distance = Math.max(window.innerWidth, window.innerHeight) / 3
       this.$refs.canvas.style.display = ''
     }
   }
