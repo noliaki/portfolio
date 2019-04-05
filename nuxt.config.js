@@ -108,7 +108,8 @@ export default {
       })
 
       const bgImages = await client.getEntries({
-        content_type: 'backgroundImage'
+        content_type: 'backgroundImage',
+        order: 'sys.id'
       })
 
       const noImages = await client.getEntries({

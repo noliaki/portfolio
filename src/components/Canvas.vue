@@ -68,14 +68,10 @@ export default {
 
     this.app.stage.addChild(this.displacementSprite)
 
-    this.inImage(this.currentImageIndex)
+    this.inImage(this.currentImageIndex, true)
   },
   methods: {
-    async inImage(imageIndex) {
-      if (!this.isAnimating) {
-        this.isAnimating = true
-      }
-
+    async inImage(imageIndex, isFirst = false) {
       if (!this.images[imageIndex]) {
         this.isLoadingNextImage = true
         this.images[imageIndex] = await this.loadAndCreate(imageIndex)
@@ -85,16 +81,25 @@ export default {
       this.initializeImage(this.images[imageIndex])
       this.fitToWindow(this.images[imageIndex].mesh)
 
-      this.images[imageIndex].mesh.alpha = 0
-      this.container.addChild(this.images[imageIndex].mesh)
+      if (isFirst) {
+        if (!this.isAnimating) {
+          this.isAnimating = true
+        }
 
-      TweenLite.to(this.images[imageIndex].mesh, 0.5, {
-        alpha: 1,
-        onComplete: () => {
-          this.isAnimating = false
-        },
-        ease: Power0.easeNone
-      })
+        this.images[imageIndex].mesh.alpha = 0
+
+        TweenLite.to(this.images[imageIndex].mesh, 0.5, {
+          alpha: 1,
+          onComplete: () => {
+            this.isAnimating = false
+          },
+          ease: Power0.easeNone
+        })
+      } else {
+        this.images[imageIndex].mesh.alpha = 1
+      }
+
+      this.container.addChildAt(this.images[imageIndex].mesh, 0)
 
       const nextImageIndex = (this.currentImageIndex + 1) % this.entries.length
       if (!this.images[nextImageIndex]) {
@@ -125,6 +130,10 @@ export default {
       const origVertices = this.images[imageIndex].originalVertices
       const ratio = origVertices.map(item => Math.random())
 
+      this.currentImageIndex =
+        (this.currentImageIndex + 1) % this.entries.length
+      this.inImage(this.currentImageIndex)
+
       TweenLite.to(obj, 1, {
         alpha: 0,
         scaleX: Math.random() * 1000 + 1000,
@@ -140,9 +149,7 @@ export default {
           }
         },
         onComplete: () => {
-          this.currentImageIndex =
-            (this.currentImageIndex + 1) % this.entries.length
-          this.inImage(this.currentImageIndex)
+          this.isAnimating = false
         },
         ease: Power1.easeInOut
       })
