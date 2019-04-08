@@ -7,7 +7,7 @@
       | loading next background image...
 </template>
 <script>
-/* global PIXI TweenLite Power1 */
+/* global PIXI TweenLite Power2 */
 
 import _debounce from 'lodash/debounce'
 import { mapGetters } from 'vuex'
@@ -28,11 +28,15 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('background', ['entries'])
+    ...mapGetters('background', ['entries']),
+    nextImageIndex() {
+      return (this.currentImageIndex + 1) % this.entries.length
+    }
   },
   watch: {
     $route() {
       if (!this.isAnimating && !this.isLoadingNextImage) {
+        this.currentImageIndex = this.nextImageIndex
         this.inImage(this.currentImageIndex)
       }
     }
@@ -87,18 +91,23 @@ export default {
       this.fitToWindow(imageIndex)
 
       const mesh = this.meshes.get(imageIndex)
-      const vertices = this.verticesMap.get(mesh)
-      const displacementFilter = this.displacementFilterMap.get(mesh)
+      const vertices = this.verticesMap.get(imageIndex)
+      const displacementFilter = this.displacementFilterMap.get(imageIndex)
       const randRatio = vertices.map(item => Math.random() * -2 + 1)
       const obj = {
         val: 1,
-        scaleX: Math.random() * 1000 + 1000,
-        scaleY: Math.random() * 1000 + 1000
+        filterScaleX: Math.random() * 1000 + 1000,
+        filterScaleY: Math.random() * 1000 + 1000,
+        scaleX: mesh.scale.x * 1.2,
+        scaleY: mesh.scale.y * 1.2
       }
 
       mesh.alpha = 0
-      displacementFilter.scale.x = obj.scaleX
-      displacementFilter.scale.y = obj.scaleY
+      displacementFilter.scale.x = obj.filterScaleX
+      displacementFilter.scale.y = obj.filterScaleY
+      mesh.scale.x = obj.scaleX
+      mesh.scale.y = obj.scaleY
+
       for (let i = 0, len = vertices.length; i < len; i++) {
         mesh.vertices[i] = vertices[i] + randRatio[i] * this.distance
       }
@@ -106,15 +115,20 @@ export default {
       this.container.addChild(mesh)
       mesh.visible = true
 
-      TweenLite.to(obj, 1, {
+      TweenLite.to(obj, 1.2, {
         val: 0,
-        scaleX: 0,
-        scaleY: 0,
+        filterScaleX: 0,
+        filterScaleY: 0,
+        scaleX: mesh.scale.x,
+        scaleY: mesh.scale.y,
         onUpdate: () => {
           mesh.alpha = 1 - obj.val
 
-          displacementFilter.scale.x = obj.val * obj.scaleX
-          displacementFilter.scale.y = obj.val * obj.scaleY
+          displacementFilter.scale.x = obj.val * obj.filterScaleX
+          displacementFilter.scale.y = obj.val * obj.filterScaleY
+
+          mesh.scale.x = obj.scaleX
+          mesh.scale.y = obj.scaleY
 
           for (let i = 0, len = mesh.vertices.length; i < len; i++) {
             mesh.vertices[i] =
@@ -128,13 +142,11 @@ export default {
               mesh.visible = false
             }
           })
-          this.currentImageIndex =
-            (this.currentImageIndex + 1) % this.entries.length
         },
-        ease: Power1.easeInOut
+        ease: Power2.easeInOut
       })
 
-      const nextImageIndex = (this.currentImageIndex + 1) % this.entries.length
+      const nextImageIndex = this.nextImageIndex
       if (!this.meshes.has(nextImageIndex)) {
         this.isLoadingNextImage = true
         this.meshes.set(
@@ -144,22 +156,22 @@ export default {
         this.isLoadingNextImage = false
       }
     },
-    async loadAndCreate(index) {
+    async loadAndCreate(imageIndex) {
       const texure = await this.loadImageAsTexture(
-        this.entries[index].fields.image.fields.file.url
+        this.entries[imageIndex].fields.image.fields.file.url
       )
 
-      return this.createMesh(texure)
+      return this.createMesh(imageIndex, texure)
     },
-    createMesh(texture) {
+    createMesh(imageIndex, texture) {
       const mesh = new PIXI.mesh.Plane(texture, 10, 10)
       const displacementFilter = new PIXI.filters.DisplacementFilter(
         this.displacementSprite,
         0
       )
 
-      this.verticesMap.set(mesh, mesh.vertices.slice())
-      this.displacementFilterMap.set(mesh, displacementFilter)
+      this.verticesMap.set(imageIndex, mesh.vertices.slice())
+      this.displacementFilterMap.set(imageIndex, displacementFilter)
 
       mesh.filters = [displacementFilter]
       // mesh.anchor.set(0.5)
@@ -169,8 +181,15 @@ export default {
     fitToWindow(imageIndex) {
       const mesh = this.meshes.get(imageIndex)
       const texture = mesh._texture
+
+      mesh.pivot.x = 0
+      mesh.pivot.y = 0
+
       mesh.x = 0
       mesh.y = 0
+
+      mesh.scale.x = 1
+      mesh.scale.y = 1
 
       if (
         window.innerWidth / texture.width >
@@ -179,13 +198,19 @@ export default {
         const ratio = window.innerWidth / texture.width
         mesh.width = window.innerWidth
         mesh.height = texture.height * ratio
-        mesh.y = (window.innerHeight - mesh.height) / 2
+        // mesh.y = (window.innerHeight - mesh.height) / 2
       } else {
         const ratio = window.innerHeight / texture.height
         mesh.width = texture.width * ratio
         mesh.height = window.innerHeight
-        mesh.x = (window.innerWidth - mesh.width) / 2
+        // mesh.x = (window.innerWidth - mesh.width) / 2
       }
+
+      mesh.x = window.innerWidth / 2
+      mesh.y = window.innerHeight / 2
+
+      mesh.pivot.x = texture.width / 2
+      mesh.pivot.y = texture.height / 2
     },
     loadImageAsTexture(imagePath) {
       return new Promise((resolve, reject) => {
