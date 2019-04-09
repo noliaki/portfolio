@@ -236,7 +236,8 @@ export default {
       this.displacementSprite.width = window.innerWidth
       this.displacementSprite.height = window.innerHeight
 
-      this.distance = Math.max(window.innerWidth, window.innerHeight) / 3
+      this.distance =
+        ((Math.random() + Math.random() + Math.random()) / 3) * 50 + 50
       this.$refs.canvas.style.display = ''
     }
   }
