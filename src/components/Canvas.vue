@@ -62,7 +62,7 @@ export default {
       view: this.$refs.canvas,
       resolution: 1,
       resizeTo: window,
-      backgroundColor: 0xffffff
+      backgroundColor: 0x000000
     })
 
     this.onResize()
@@ -74,10 +74,10 @@ export default {
 
     this.app.stage.addChild(this.displacementSprite)
 
-    this.inImage(this.currentImageIndex, true)
+    this.inImage(this.currentImageIndex)
   },
   methods: {
-    async inImage(imageIndex, isFirst = false) {
+    async inImage(imageIndex) {
       if (!this.isAnimating) {
         this.isAnimating = true
       }
@@ -88,9 +88,9 @@ export default {
         this.isLoadingNextImage = false
       }
 
-      this.fitToWindow(imageIndex)
-
       const mesh = this.meshes.get(imageIndex)
+      this.fitToWindow(mesh)
+
       const vertices = this.verticesMap.get(imageIndex)
       const displacementFilter = this.displacementFilterMap.get(imageIndex)
       const randRatio = vertices.map(item => Math.random() * -2 + 1)
@@ -112,6 +112,7 @@ export default {
         mesh.vertices[i] = vertices[i] + randRatio[i] * this.distance
       }
 
+      console.log(mesh._texture.baseTexture.imageUrl)
       this.container.addChild(mesh)
       mesh.visible = true
 
@@ -136,12 +137,12 @@ export default {
           }
         },
         onComplete: () => {
-          this.isAnimating = false
           this.meshes.forEach((mesh, key, map) => {
             if (key !== imageIndex) {
               mesh.visible = false
             }
           })
+          this.isAnimating = false
         },
         ease: Power2.easeInOut
       })
@@ -178,8 +179,7 @@ export default {
 
       return mesh
     },
-    fitToWindow(imageIndex) {
-      const mesh = this.meshes.get(imageIndex)
+    fitToWindow(mesh) {
       const texture = mesh._texture
 
       mesh.pivot.x = 0
@@ -230,7 +230,7 @@ export default {
       this.app.renderer.resize(window.innerWidth, window.innerHeight)
 
       if (this.meshes.has(this.currentImageIndex)) {
-        this.fitToWindow(this.currentImageIndex)
+        this.fitToWindow(this.meshes.get(this.currentImageIndex))
       }
 
       this.displacementSprite.width = window.innerWidth
