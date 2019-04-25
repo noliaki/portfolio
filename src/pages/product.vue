@@ -52,7 +52,7 @@ export default {
   methods: {
     thumbnailSrc(index) {
       const n = (this.startIndex + index) % this.noImages.length
-      return this.noImages[n].fields.image.fields.file.url
+      return `https:${this.noImages[n].fields.image.fields.file.url}`
     },
     dateFormat(dateString) {
       const date = new Date(dateString)

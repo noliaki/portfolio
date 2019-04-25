@@ -159,7 +159,7 @@ export default {
     },
     async loadAndCreate(imageIndex) {
       const texure = await this.loadImageAsTexture(
-        this.entries[imageIndex].fields.image.fields.file.url
+        `https:${this.entries[imageIndex].fields.image.fields.file.url}`
       )
 
       return this.createMesh(imageIndex, texure)
