@@ -7,7 +7,7 @@
       | loading next background image...
 </template>
 <script>
-/* global PIXI TweenLite Power2 */
+/* global TweenLite Power2 */
 
 import _debounce from 'lodash/debounce'
 import { mapGetters } from 'vuex'
@@ -45,20 +45,19 @@ export default {
     if (process.server) return
 
     if (process.env.NODE_ENV === 'production') {
-      PIXI.utils.skipHello()
+      this.$PIXI.utils.skipHello()
     }
 
-    this.displacementSprite = PIXI.Sprite.fromImage(
+    this.displacementSprite = this.$PIXI.Sprite.from(
       `${this.$router.options.base}img/cloud.png`
     )
 
     this.displacementSprite.alpha = 0
 
-    this.displacementSprite.texture.baseTexture.wrapMode =
-      PIXI.WRAP_MODES.MIRRORED_REPEAT
+    this.displacementSprite.texture.baseTexture.wrapMode = this.$PIXI.WRAP_MODES.MIRRORED_REPEAT
   },
   mounted() {
-    this.app = new PIXI.Application({
+    this.app = new this.$PIXI.Application({
       view: this.$refs.canvas,
       resolution: 1,
       resizeTo: window,
@@ -66,7 +65,7 @@ export default {
     })
 
     this.onResize()
-    this.container = new PIXI.Container()
+    this.container = new this.$PIXI.Container()
     this.app.stage.addChild(this.container)
     this.currentImageIndex = Math.floor(Math.random() * this.entries.length)
 
@@ -91,9 +90,9 @@ export default {
       const mesh = this.meshes.get(imageIndex)
       this.fitToWindow(mesh)
 
-      const vertices = this.verticesMap.get(imageIndex)
+      // const vertices = this.verticesMap.get(imageIndex)
       const displacementFilter = this.displacementFilterMap.get(imageIndex)
-      const randRatio = vertices.map(item => Math.random() * -2 + 1)
+      // const randRatio = vertices.map(item => Math.random() * -2 + 1)
       const obj = {
         val: 1,
         filterScaleX: Math.random() * 1000 + 1000,
@@ -108,11 +107,10 @@ export default {
       mesh.scale.x = obj.scaleX
       mesh.scale.y = obj.scaleY
 
-      for (let i = 0, len = vertices.length; i < len; i++) {
-        mesh.vertices[i] = vertices[i] + randRatio[i] * this.distance
-      }
+      // for (let i = 0, len = vertices.length; i < len; i++) {
+      //   mesh.verticesBuffer.data[i] = vertices[i] + randRatio[i] * this.distance
+      // }
 
-      console.log(mesh._texture.baseTexture.imageUrl)
       this.container.addChild(mesh)
       mesh.visible = true
 
@@ -131,10 +129,12 @@ export default {
           mesh.scale.x = obj.scaleX
           mesh.scale.y = obj.scaleY
 
-          for (let i = 0, len = mesh.vertices.length; i < len; i++) {
-            mesh.vertices[i] =
-              vertices[i] + randRatio[i] * this.distance * obj.val
-          }
+          // for (let i = 0, len = vertices.length; i < len; i++) {
+          //   mesh.verticesBuffer.data[i] =
+          //     vertices[i] + randRatio[i] * this.distance * obj.val
+          // }
+
+          // mesh.verticesBuffer._updateID++
         },
         onComplete: () => {
           this.meshes.forEach((mesh, key, map) => {
@@ -165,13 +165,14 @@ export default {
       return this.createMesh(imageIndex, texure)
     },
     createMesh(imageIndex, texture) {
-      const mesh = new PIXI.mesh.Plane(texture, 10, 10)
-      const displacementFilter = new PIXI.filters.DisplacementFilter(
+      const mesh = new this.$PIXI.Sprite(texture)
+      // const mesh = new this.$PIXI.SimplePlane(texture, 10, 10)
+      const displacementFilter = new this.$PIXI.filters.DisplacementFilter(
         this.displacementSprite,
         0
       )
 
-      this.verticesMap.set(imageIndex, mesh.vertices.slice())
+      // this.verticesMap.set(imageIndex, mesh.verticesBuffer.data.slice())
       this.displacementFilterMap.set(imageIndex, displacementFilter)
 
       mesh.filters = [displacementFilter]
@@ -180,7 +181,7 @@ export default {
       return mesh
     },
     fitToWindow(mesh) {
-      const texture = mesh._texture
+      const texture = mesh.texture
 
       mesh.pivot.x = 0
       mesh.pivot.y = 0
@@ -214,14 +215,16 @@ export default {
     },
     loadImageAsTexture(imagePath) {
       return new Promise((resolve, reject) => {
-        const texture = PIXI.Texture.fromImage(imagePath)
+        const loader = new this.$PIXI.Loader()
+        loader.add(imagePath, imagePath)
 
-        texture.once('update', texture => {
-          resolve(texture)
+        loader.onError.add(_ => {
+          console.log('error')
+          reject(_)
         })
 
-        texture.once('error', err => {
-          reject(err)
+        loader.load((loader, resource) => {
+          resolve(resource[imagePath].texture)
         })
       })
     },

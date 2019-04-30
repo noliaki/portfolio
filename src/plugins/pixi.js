@@ -1,3 +1,4 @@
+import Vue from 'vue'
 import * as PIXI from 'pixi.js'
 
-export default PIXI
+Vue.prototype.$PIXI = PIXI
