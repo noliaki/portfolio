@@ -1,11 +1,13 @@
-<template lang="pug">
-  main
+<template>
+  <main></main>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import Vue from 'vue'
+
+export default Vue.extend({
   head: {
     title: 'home'
   }
-}
+})
 </script>

@@ -1,6 +1,7 @@
 @import '../../node_modules/@noliaki/css-cubic-bezier-variable/stylus/ease-variables'
 
 $color-font = #2f3233
+$color-accent = #3b82bf
 
 *
   &
@@ -35,7 +36,7 @@ a
   color $color-font
 
   &:hover
-    color #306779
+    color $color-accent
 
 .wrapper
   padding-bottom 40px
@@ -43,7 +44,7 @@ a
 .page-enter
   opacity 0
   transform-origin: 0 0
-  transform: translateY(-15px) skewY(-2deg)
+  transform: translateY(20px) skewY(4deg)
 
 .page-enter-to
 .page-leave
@@ -52,19 +53,21 @@ a
   transform: translateY(0) skewY(0)
 
 .page-enter-active
+  transition opacity 400ms $easeOutCubic,
+             transform 400ms $easeOutCubic
 .page-leave-active
-  transition opacity 400ms $easeInOutQuad,
-             transform 400ms $easeInOutQuad
+  transition opacity 300ms $easeOutCubic,
+             transform 300ms $easeOutCubic
 
 .page-leave-to
   opacity 0
   transform-origin: 0 0
-  transform: translateY(15px) skewY(2deg)
+  transform: translateY(-20px) skewY(-4deg)
 
 // product
 .product__list
   display grid
-  grid-template-columns repeat(auto-fill, minmax(220px, 1fr))
+  grid-template-columns repeat(auto-fill, minmax(300px, 1fr))
   grid-gap 20px
   list-style none
   margin 0
@@ -75,8 +78,15 @@ a
   flex-direction column
   background-color rgba(#fff, 0.8)
 
+.product__header
+  border-left 3px solid $color-accent
+  padding 7px 15px 0 12px
+
 .product__body
-  padding 15px
+  margin 15px
+
+  > *:first-child
+    margin-top 0
 
 .product__name
   font-size 1.4em
@@ -99,12 +109,12 @@ a
     width 100%
     height 100%
 
-.product__description
-  flex-grow 1
-  white-space pre-wrap
+// .product__description
+//   flex-grow 1
+//   white-space pre-wrap
 
-  p:first-of-type
-    margin-top 0.5em
+//   p:first-of-type
+//     margin-top 0.5em
 
 .about
   padding 2em 1em
@@ -128,8 +138,8 @@ a
   right 0
   bottom 0
   left 0
-  background-color #fff
-  opacity 0.4
+  background-color #092944
+  opacity 0.25
   z-index -1
   transition opacity 300ms linear
 

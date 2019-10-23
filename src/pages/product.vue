@@ -1,39 +1,50 @@
-<template lang="pug">
-  main
-    article.content
-      ul.product__list
-        li.product__item(v-for="(item, index) in products", :key="index")
-          .product__thumbnail
-            img(:src="thumbnailSrc(index)", :alt="item.fields.title")
-          .product__body
-            small {{ dateFormat(item.sys.createdAt) }}
-            .product__name
-              em
-                a(
-                  :href="item.fields.url",
-                  target="_blank",
+<template>
+  <main>
+    <article class="content">
+      <ul class="product__list">
+        <li
+          v-for="(item, index) in products"
+          :key="index"
+          class="product__item"
+        >
+          <header class="product__header">
+            <small>{{ dateFormat(item.sys.createdAt) }}</small>
+            <div class="product__name">
+              <em>
+                <a
+                  :href="item.fields.url"
+                  target="_blank"
                   rel="noopener noreferer"
-                ) {{ item.fields.title }}
-            .product__description
-              content-to-element(
-                v-for="(content, index) in item.fields.description.content.slice(0, 1)",
-                :content="content",
-                :key="index"
-              )
-
+                  >{{ item.fields.title }}</a
+                >
+              </em>
+            </div>
+          </header>
+          <div class="product__body">
+            <content-to-element
+              v-for="(content, elIndex) in descriptionContents(item)"
+              :key="elIndex"
+              :content="content"
+            ></content-to-element>
+          </div>
+        </li>
+      </ul>
+    </article>
+  </main>
 </template>
-<script>
-import contentToElement from '~/components/ContentToElement'
+<script lang="ts">
+import Vue from 'vue'
 import { mapGetters } from 'vuex'
+import contentToElement from '~/components/ContentToElement.vue'
 
-export default {
+export default Vue.extend({
   head: {
     title: 'product'
   },
   components: {
     contentToElement
   },
-  data() {
+  data(): any {
     return {
       random: Math.random()
     }
@@ -42,22 +53,18 @@ export default {
     ...mapGetters('product', {
       products: 'entries'
     }),
-    ...mapGetters('no-image', {
-      noImages: 'entries'
-    }),
-    startIndex() {
+    startIndex(): number {
       return Math.floor(this.random * this.noImages.length)
     }
   },
   methods: {
-    thumbnailSrc(index) {
-      const n = (this.startIndex + index) % this.noImages.length
-      return `https:${this.noImages[n].fields.image.fields.file.url}`
-    },
-    dateFormat(dateString) {
+    dateFormat(dateString: string): string {
       const date = new Date(dateString)
       return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`
+    },
+    descriptionContents(item: any) {
+      return item.fields.description.content.slice(0, 1)
     }
   }
-}
+})
 </script>
