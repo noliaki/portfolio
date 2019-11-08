@@ -1,14 +1,16 @@
 import * as fs from 'fs'
+import { Configuration } from '@nuxt/types'
+
 import TerserPlugin from 'terser-webpack-plugin'
 import * as contentful from 'contentful'
-import pkg from './package'
+import pkg from './package.json'
 
-const client = contentful.createClient({
+const client: contentful.ContentfulClientApi = contentful.createClient({
   space: process.env.SPACE_ID || require('./env.json').SPACE_ID,
   accessToken: process.env.ACCESS_TOKEN || require('./env.json').ACCESS_TOKEN
 })
 
-export default {
+const config: Configuration = {
   mode: 'universal',
 
   /*
@@ -41,21 +43,13 @@ export default {
   /*
    ** Plugins to load before mounting the App
    */
-  plugins: [
-    {
-      src: '~/plugins/pixi',
-      mode: 'client'
-    },
-    {
-      src: '~/plugins/gsap',
-      mode: 'client'
-    }
-  ],
+  plugins: [],
 
   /*
    ** Nuxt.js modules
    */
   modules: ['@nuxtjs/pwa'],
+  buildModules: ['@nuxt/typescript-build'],
   manifest: {
     name: 'noliaki portfolio',
     lang: 'ja',
@@ -116,7 +110,12 @@ export default {
     /*
      ** You can extend webpack config here
      */
-    extend(config, ctx) {
+    extend(config: any, ctx) {
+      config.module.rules.push({
+        test: /\.glsl$/,
+        loader: 'raw-loader'
+      })
+
       // Run ESLint on save
       if (ctx.isDev && ctx.isClient) {
         config.module.rules.push({
@@ -151,28 +150,28 @@ export default {
   generate: {
     dir: 'dist'
   },
-  transition: 'page',
+  pageTransition: 'page',
   hooks: {
-    async ready(nuxt) {
-      const productItems = await client.getEntries({
+    async ready(nuxt: any): Promise<void> {
+      const productItems: contentful.EntryCollection<
+        any
+      > = await client.getEntries({
         content_type: 'product',
         order: '-sys.createdAt'
       })
 
-      const bgImages = await client.getEntries({
-        content_type: 'backgroundImage',
-        order: 'sys.id'
-      })
+      const bgImages: contentful.EntryCollection<any> = await client.getEntries(
+        {
+          content_type: 'backgroundImage',
+          order: 'sys.id'
+        }
+      )
 
-      const noImages = await client.getEntries({
-        content_type: 'noImage'
-      })
-
-      const about = await client.getEntries({
+      const about: contentful.EntryCollection<any> = await client.getEntries({
         content_type: 'about'
       })
 
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve: () => void): void => {
         fs.writeFileSync(
           `${nuxt.options.srcDir}/static/product-entries.json`,
           JSON.stringify(productItems.items)
@@ -181,11 +180,6 @@ export default {
         fs.writeFileSync(
           `${nuxt.options.srcDir}/static/background-entries.json`,
           JSON.stringify(bgImages.items)
-        )
-
-        fs.writeFileSync(
-          `${nuxt.options.srcDir}/static/noImage-entries.json`,
-          JSON.stringify(noImages.items)
         )
 
         fs.writeFileSync(
@@ -198,3 +192,5 @@ export default {
     }
   }
 }
+
+export default config

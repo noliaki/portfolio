@@ -1,248 +1,259 @@
-<template lang="pug">
-  div(:class="`-${$route.name}`")
-    canvas.background-canvas(ref="canvas")
-    .cover
-    .loading-next-image(v-show="isLoadingNextImage")
-      span.loading-circle
-      | loading next background image...
+<template>
+  <div :class="`-${$route.name}`">
+    <canvas ref="canvas" class="background-canvas"></canvas>
+    <div class="cover"></div>
+    <div v-show="isLoadingNextImage" class="loading-next-image">
+      <span class="loading-circle"></span>loading next background image...
+    </div>
+  </div>
 </template>
-<script>
-/* global TweenLite Power2 */
+<script lang="ts">
+import Vue from 'vue'
 
-import _debounce from 'lodash/debounce'
-import { mapGetters } from 'vuex'
+import WebGlBase from '~/helper/WebGlBase'
+import Square from '~/helper/Square'
+import vertexShaderSource from '~/glsl/vertex-shader.glsl'
+import fragmentShaderSource from '~/glsl/fragment-shader'
+import loadImage from '~/helper/load-image'
+import eventBus from '~/helper/event-bus'
 
-export default {
-  data() {
+interface BgImage {
+  url: string
+  resolution: [number, number]
+  texture?: HTMLImageElement | HTMLCanvasElement
+}
+
+function shuffle(_a: any[]): any[] {
+  const a: any[] = _a.slice()
+
+  for (let i: number = a.length - 1; i >= 0; i--) {
+    const r: number = Math.floor(Math.random() * (i + 1))
+    const temp: any = a[i]
+    a[i] = a[r]
+    a[r] = temp
+  }
+
+  return a
+}
+
+export default Vue.extend({
+  data(): any {
     return {
-      app: undefined,
-      container: undefined,
-      meshes: new Map(),
-      currentImageIndex: 0,
+      webGlBase: null,
+      square: undefined,
+      time: 0,
+      timeStep: Math.random(),
+      progress: 0,
+      bgImages: [],
+      currentBgIndex: 0,
+      nextBgIndex: 0,
       isAnimating: false,
-      displacementSprite: undefined,
-      isLoadingNextImage: false,
-      distance: 0,
-      verticesMap: new Map(),
-      displacementFilterMap: new Map()
+      raf: undefined,
+      isLoadingNextImage: false
     }
   },
   computed: {
-    ...mapGetters('background', ['entries']),
-    nextImageIndex() {
-      return (this.currentImageIndex + 1) % this.entries.length
+    currentBgImage(): any {
+      return this.bgImages[this.currentBgIndex]
     }
   },
   watch: {
-    $route() {
-      if (!this.isAnimating && !this.isLoadingNextImage) {
-        this.currentImageIndex = this.nextImageIndex
-        this.inImage(this.currentImageIndex)
-      }
+    $route(): void {
+      this.changeImageTo()
     }
   },
-  created() {
-    if (process.server) return
+  async mounted(): Promise<void> {
+    this.bgImages = await fetch('/background-entries.json')
+      .then((res: Response): Promise<any> => res.json())
+      .then(json =>
+        shuffle(
+          (json as any[]).map(
+            (value: any): BgImage => {
+              return {
+                url: value.fields.image.fields.file.url,
+                resolution: [
+                  value.fields.image.fields.file.details.image.width,
+                  value.fields.image.fields.file.details.image.height
+                ]
+              }
+            }
+          )
+        )
+      )
 
-    if (process.env.NODE_ENV === 'production') {
-      this.$PIXI.utils.skipHello()
-    }
+    const filterTexture = await loadImage('/img/cloud.png')
+    await this.loadImageByIndex(this.currentBgIndex)
+    // await this.loadImageByIndex(this.nextBgIndex)
 
-    this.displacementSprite = this.$PIXI.Sprite.from(
-      `${this.$router.options.base}img/cloud.png`
-    )
-
-    this.displacementSprite.alpha = 0
-
-    this.displacementSprite.texture.baseTexture.wrapMode = this.$PIXI.WRAP_MODES.MIRRORED_REPEAT
-  },
-  mounted() {
-    this.app = new this.$PIXI.Application({
-      view: this.$refs.canvas,
-      resolution: 1,
-      resizeTo: window,
-      backgroundColor: 0x000000
+    this.webGlBase = new WebGlBase({
+      canvasEl: this.$refs.canvas,
+      clearColor: [1, 1, 1, 1],
+      width: window.innerWidth,
+      height: window.innerHeight
     })
 
-    this.onResize()
-    this.container = new this.$PIXI.Container()
-    this.app.stage.addChild(this.container)
-    this.currentImageIndex = Math.floor(Math.random() * this.entries.length)
+    this.square = new Square([0, 0, 0], 2, 2)
 
-    window.addEventListener('resize', _debounce(this.onResize, 300))
+    this.webGlBase
+      .createProgram(vertexShaderSource, fragmentShaderSource)
+      .registerUniform({
+        name: 'uResolution',
+        data: [window.innerWidth, window.innerHeight],
+        type: '2fv'
+      })
+      .registerUniform({
+        name: 'uPrevImageResolution',
+        data: this.currentBgImage.resolution,
+        type: '2fv'
+      })
+      .registerUniform({
+        name: 'uTime',
+        data: this.time,
+        type: '1f'
+      })
+      .registerUniform({
+        name: 'uProgress',
+        data: this.progress,
+        type: '1f'
+      })
+      .registerTexture({
+        name: 'filterTexture',
+        image: filterTexture
+      })
+      .registerVertexAttrByName({
+        name: 'position',
+        size: 3,
+        data: this.square.position
+      })
+      .registerVertexAttrByName({
+        name: 'textureCoord',
+        size: 2,
+        data: new Float32Array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0])
+      })
+      .bindBuffer(
+        this.webGlBase.createBufferObj(
+          this.square.index,
+          'ELEMENT_ARRAY_BUFFER',
+          'STATIC_DRAW'
+        ),
+        'ELEMENT_ARRAY_BUFFER'
+      )
+      .drawElements('TRIANGLES', this.square.index.length)
+      .flush()
 
-    this.app.stage.addChild(this.displacementSprite)
-
-    this.inImage(this.currentImageIndex)
+    eventBus.$on('winResize', (winWidth: number, winHeight: number): void => {
+      this.webGlBase
+        .setCanvasSize(winWidth, winHeight)
+        .clear()
+        .registerUniform({
+          name: 'uResolution',
+          data: [winWidth, winHeight],
+          type: '2fv'
+        })
+        .drawElements('TRIANGLES', this.square.index.length)
+        .flush()
+    })
+    this.changeImageTo()
   },
   methods: {
-    async inImage(imageIndex) {
-      if (!this.isAnimating) {
-        this.isAnimating = true
+    async loadImageByIndex(
+      index: number
+    ): Promise<HTMLImageElement | HTMLCanvasElement> {
+      if (this.bgImages[index].texture) {
+        return this.bgImages[index].texture
       }
 
-      if (!this.meshes.has(imageIndex)) {
-        this.isLoadingNextImage = true
-        this.meshes.set(imageIndex, await this.loadAndCreate(imageIndex))
-        this.isLoadingNextImage = false
-      }
+      this.isLoadingNextImage = true
+      this.bgImages[index].texture = await loadImage(this.bgImages[index].url)
+      this.isLoadingNextImage = false
 
-      const mesh = this.meshes.get(imageIndex)
-      this.fitToWindow(mesh)
-
-      // const vertices = this.verticesMap.get(imageIndex)
-      const displacementFilter = this.displacementFilterMap.get(imageIndex)
-      // const randRatio = vertices.map(item => Math.random() * -2 + 1)
-      const obj = {
-        val: 1,
-        filterScaleX: Math.random() * 1000 + 1000,
-        filterScaleY: Math.random() * 1000 + 1000,
-        scaleX: mesh.scale.x * 1.2,
-        scaleY: mesh.scale.y * 1.2
-      }
-
-      mesh.alpha = 0
-      displacementFilter.scale.x = obj.filterScaleX
-      displacementFilter.scale.y = obj.filterScaleY
-      mesh.scale.x = obj.scaleX
-      mesh.scale.y = obj.scaleY
-
-      // for (let i = 0, len = vertices.length; i < len; i++) {
-      //   mesh.verticesBuffer.data[i] = vertices[i] + randRatio[i] * this.distance
-      // }
-
-      this.container.addChild(mesh)
-      mesh.visible = true
-
-      TweenLite.to(obj, 1.2, {
-        val: 0,
-        filterScaleX: 0,
-        filterScaleY: 0,
-        scaleX: mesh.scale.x,
-        scaleY: mesh.scale.y,
-        onUpdate: () => {
-          mesh.alpha = 1 - obj.val
-
-          displacementFilter.scale.x = obj.val * obj.filterScaleX
-          displacementFilter.scale.y = obj.val * obj.filterScaleY
-
-          mesh.scale.x = obj.scaleX
-          mesh.scale.y = obj.scaleY
-
-          // for (let i = 0, len = vertices.length; i < len; i++) {
-          //   mesh.verticesBuffer.data[i] =
-          //     vertices[i] + randRatio[i] * this.distance * obj.val
-          // }
-
-          // mesh.verticesBuffer._updateID++
-        },
-        onComplete: () => {
-          this.meshes.forEach((mesh, key, map) => {
-            if (key !== imageIndex) {
-              mesh.visible = false
-            }
-          })
-          this.isAnimating = false
-        },
-        ease: Power2.easeInOut
-      })
-
-      const nextImageIndex = this.nextImageIndex
-      if (!this.meshes.has(nextImageIndex)) {
-        this.isLoadingNextImage = true
-        this.meshes.set(
-          nextImageIndex,
-          await this.loadAndCreate(nextImageIndex)
-        )
-        this.isLoadingNextImage = false
-      }
+      return this.bgImages[index].texture
     },
-    async loadAndCreate(imageIndex) {
-      const texure = await this.loadImageAsTexture(
-        `https:${this.entries[imageIndex].fields.image.fields.file.url}`
-      )
+    changeImageTo(): void {
+      if (this.isLoadingNextImage || this.isAnimating) return
 
-      return this.createMesh(imageIndex, texure)
+      this.loadImageByIndex((this.nextBgIndex + 1) % this.bgImages.length)
+
+      this.isAnimating = true
+      this.timeStep = Math.random() * 0.02
+
+      this.webGlBase
+        .registerUniform({
+          name: 'uNextImageResolution',
+          data: this.bgImages[this.nextBgIndex].resolution,
+          type: '2fv'
+        })
+        .registerTexture({
+          name: 'texture2',
+          image: this.bgImages[this.nextBgIndex].texture
+        })
+
+      this.update()
     },
-    createMesh(imageIndex, texture) {
-      const mesh = new this.$PIXI.Sprite(texture)
-      // const mesh = new this.$PIXI.SimplePlane(texture, 10, 10)
-      const displacementFilter = new this.$PIXI.filters.DisplacementFilter(
-        this.displacementSprite,
-        0
-      )
+    update(): void {
+      this.time += this.timeStep
+      this.progress += 1 / 110
 
-      // this.verticesMap.set(imageIndex, mesh.verticesBuffer.data.slice())
-      this.displacementFilterMap.set(imageIndex, displacementFilter)
+      this.webGlBase
+        .clear()
+        .registerUniform({
+          name: 'uTime',
+          data: this.time,
+          type: '1f'
+        })
+        .registerUniform({
+          name: 'uProgress',
+          data: this.progress > 1 ? 1 : this.progress,
+          type: '1f'
+        })
+        .drawElements('TRIANGLES', this.square.index.length)
+        .flush()
 
-      mesh.filters = [displacementFilter]
-      // mesh.anchor.set(0.5)
-
-      return mesh
-    },
-    fitToWindow(mesh) {
-      const texture = mesh.texture
-
-      mesh.pivot.x = 0
-      mesh.pivot.y = 0
-
-      mesh.x = 0
-      mesh.y = 0
-
-      mesh.scale.x = 1
-      mesh.scale.y = 1
-
-      if (
-        window.innerWidth / texture.width >
-        window.innerHeight / texture.height
-      ) {
-        const ratio = window.innerWidth / texture.width
-        mesh.width = window.innerWidth
-        mesh.height = texture.height * ratio
-        // mesh.y = (window.innerHeight - mesh.height) / 2
+      if (this.progress >= 1) {
+        cancelAnimationFrame(this.raf)
+        this.completeChange()
       } else {
-        const ratio = window.innerHeight / texture.height
-        mesh.width = texture.width * ratio
-        mesh.height = window.innerHeight
-        // mesh.x = (window.innerWidth - mesh.width) / 2
-      }
-
-      mesh.x = window.innerWidth / 2
-      mesh.y = window.innerHeight / 2
-
-      mesh.pivot.x = texture.width / 2
-      mesh.pivot.y = texture.height / 2
-    },
-    loadImageAsTexture(imagePath) {
-      return new Promise((resolve, reject) => {
-        const loader = new this.$PIXI.Loader()
-        loader.add(imagePath, imagePath)
-
-        loader.onError.add(_ => {
-          console.log('error')
-          reject(_)
+        this.raf = requestAnimationFrame((): void => {
+          this.update()
         })
-
-        loader.load((loader, resource) => {
-          resolve(resource[imagePath].texture)
-        })
-      })
-    },
-    onResize() {
-      this.$refs.canvas.style.display = 'none'
-      this.app.renderer.resize(window.innerWidth, window.innerHeight)
-
-      if (this.meshes.has(this.currentImageIndex)) {
-        this.fitToWindow(this.meshes.get(this.currentImageIndex))
       }
+    },
+    completeChange(): void {
+      const nextBgImage: BgImage = this.bgImages[this.nextBgIndex]
 
-      this.displacementSprite.width = window.innerWidth
-      this.displacementSprite.height = window.innerHeight
+      this.time = 0
+      this.progress = 0
 
-      this.distance =
-        ((Math.random() + Math.random() + Math.random()) / 3) * 50 + 50
-      this.$refs.canvas.style.display = ''
+      this.webGlBase
+        .clear()
+        .registerTexture({
+          name: 'texture1',
+          image: nextBgImage.texture
+        })
+        .registerUniform({
+          name: 'uPrevImageResolution',
+          data: nextBgImage.resolution,
+          type: '2fv'
+        })
+        .registerUniform({
+          name: 'uTime',
+          data: this.time,
+          type: '1f'
+        })
+        .registerUniform({
+          name: 'uProgress',
+          data: this.progress,
+          type: '1f'
+        })
+        .drawElements('TRIANGLES', this.square.index.length)
+        .flush()
+
+      if (this.currentBgIndex !== this.nextBgIndex) {
+        this.currentBgIndex = this.nextBgIndex
+      }
+      this.nextBgIndex = (this.currentBgIndex + 1) % this.bgImages.length
+      this.isAnimating = false
     }
   }
-}
+})
 </script>

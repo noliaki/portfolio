@@ -1,14 +1,16 @@
-<script>
-export default {
+<script lang="ts">
+import Vue, { VNode, PropOptions } from 'vue'
+
+export default Vue.extend({
   props: {
     content: {
       type: Object,
       require: true,
       default: () => ({})
-    }
+    } as PropOptions<any>
   },
   methods: {
-    tagEl(nodeType) {
+    tagEl(nodeType: string): string {
       switch (nodeType) {
         case 'paragraph':
           return 'p'
@@ -22,8 +24,8 @@ export default {
           return 'div'
       }
     },
-    createEl(h, content) {
-      const option = Object.keys(content.data).reduce((acc, current) => {
+    createEl(content: any): VNode {
+      const option = Object.keys(content.data).reduce((acc: any, current) => {
         if (current === 'uri') {
           acc.href = content.data[current]
           acc.target = '_blank'
@@ -38,19 +40,19 @@ export default {
         return acc
       }, {})
 
-      return h(
+      return this.$createElement(
         this.tagEl(content.nodeType),
         {
           attrs: option
         },
         content.content
-          ? content.content.map(item => this.createEl(h, item))
+          ? content.content.map((item: any): VNode => this.createEl(item))
           : content.value
       )
     }
   },
-  render(h) {
-    return this.createEl(h, this.content)
+  render(): VNode {
+    return this.createEl(this.content)
   }
-}
+})
 </script>
