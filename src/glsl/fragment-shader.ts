@@ -3,7 +3,7 @@ import noise from './fragment-shader/simple-noise.glsl'
 import main from './fragment-shader/main.glsl'
 
 export default `
-precision mediump float;
+precision highp float;
 
 ${easing}
 ${noise}
